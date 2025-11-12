@@ -1,4 +1,3 @@
-
 const camera = document.getElementById('camera');
 const outfit = document.getElementById('outfit');
 
@@ -17,4 +16,3 @@ document.body.addEventListener('click', () => {
   startCamera();
   document.querySelector('.instructions').textContent = "Align yourself with the outfit 👗";
 }, { once: true });
-
