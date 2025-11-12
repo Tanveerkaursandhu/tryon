@@ -43,10 +43,8 @@ html, body {
 
 #outfit {
   position: absolute;
-  bottom: 5%;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 85vh;
   z-index: 2;
   opacity: 0.95;
+  transform: translateX(-50%);
+  height: 85vh;
 }
