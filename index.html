@@ -30,12 +30,12 @@
   <p class="instructions">Click anywhere to start 👗</p>
 
   <video id="camera" autoplay playsinline></video>
-  <img id="outfit" src="outfit.png" alt="Outfit">
+ <img id="outfit" src="outfit.png" alt="Outfit">
+  <!-- ✅ Load Mediapipe libraries from a working CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
-  <!-- Include Mediapipe -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
-
+  <!-- ✅ Your script last -->
   <script src="script.js"></script>
 </body>
 </html>
