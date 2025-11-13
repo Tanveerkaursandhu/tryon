@@ -18,23 +18,74 @@
 </html>
  -->
 
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RIYASAT-E-LIBAS TRY-ON</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <title>Riyasat-e-Libas Try-On</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body { margin:0; padding:0; height:100%; background:black; overflow:hidden; }
+    #camera { position:fixed; width:100%; height:100%; object-fit:cover; z-index:0; }
+    #outfit { position:absolute; z-index:2; width:200px; transform-origin:center top; opacity:0.9; }
+    h1, p { position:absolute; width:100%; text-align:center; color:white; z-index:3; }
+    h1 { top:15px; text-shadow:0 0 8px gold; }
+    p { top:60px; color:#ffd; }
+  </style>
 </head>
 <body>
-  <h1 class="brand">RIYASAT-E-LIBAS</h1>
-  <p class="instructions">Tap anywhere to start camera 👗</p>
-
+  <h1>RIYASAT-E-LIBAS</h1>
+  <p id="text">Tap to start camera 👗</p>
   <video id="camera" autoplay playsinline></video>
-  <img id="outfit" src="outfit.png" alt="Outfit">
+  <img id="outfit" src="outfit.png">
 
-  <!-- MediaPipe + Camera utils -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  <script>
+    const video = document.getElementById('camera');
+    const outfit = document.getElementById('outfit');
+    const text = document.getElementById('text');
 
-  <script src="script.js"></script>
+    document.body.addEventListener('click', () => {
+      text.textContent = "Align your upper body with the outfit 👗";
+      startCamera();
+    }, { once: true });
+
+    async function startCamera() {
+      const pose = new Pose.Pose({
+        locateFile: (file) => https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}
+      });
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+      pose.onResults(onPoseResults);
+
+      const camera = new Camera(video, {
+        onFrame: async () => {
+          await pose.send({ image: video });
+        },
+        width: 640,
+        height: 480
+      });
+      camera.start();
+    }
+
+    function onPoseResults(results) {
+      if (!results.poseLandmarks) return;
+      const lm = results.poseLandmarks;
+      const left = lm[11], right = lm[12], hipL = lm[23], hipR = lm[24];
+      const cx = (left.x + right.x)/2 * window.innerWidth;
+      const cy = (left.y + right.y)/2 * window.innerHeight;
+      const torsoH = Math.abs(((left.y + right.y)/2) - ((hipL.y + hipR.y)/2)) * window.innerHeight;
+      const shoulderW = Math.abs(left.x - right.x) * window.innerWidth;
+      outfit.style.left = ${cx}px;
+      outfit.style.top = ${cy - torsoH * 0.2}px;
+      outfit.style.transform = translate(-50%, 0) scale(${shoulderW / 200});
+    }
+  </script>
 </body>
 </html>
