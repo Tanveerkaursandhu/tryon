@@ -18,26 +18,32 @@
 </html>
  -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pose Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="background:black; color:white; text-align:center;">
-  <h2>Pose Test — Look at console</h2>
+  <h2>Pose Test — check console 👇</h2>
   <video id="camera" autoplay playsinline style="width:100%; height:auto;"></video>
 
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  <!-- ✅ Correct script order (important!) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
   <script>
+    console.log("🟢 JavaScript is running!"); // <– first check
+
     const video = document.getElementById('camera');
 
     async function init() {
-      console.log("📸 Starting camera...");
+      console.log("📸 Starting camera setup...");
+
       const pose = new Pose.Pose({
         locateFile: (file) => https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}
       });
+
       pose.setOptions({
         modelComplexity: 1,
         smoothLandmarks: true,
@@ -64,8 +70,7 @@
       camera.start();
     }
 
-    init();
+    init().catch(err => console.error("🚨 Init failed:", err));
   </script>
 </body>
 </html>
-
