@@ -101,77 +101,25 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
 
+<!-- Mediapipe libraries -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
 <script>
-  const cameraEl = document.getElementById('camera');
-  const outfitEl = document.getElementById('outfit');
-  const instructions = document.querySelector('.instructions');
-
-  let lastX = 0, lastY = 0, lastHeight = 0;
-
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      cameraEl.srcObject = stream;
-      cameraEl.style.display = 'block';
-      outfitEl.style.display = 'block';
-      instructions.textContent = "Move slightly back and forth to align 👗";
-
-      const pose = new Pose.Pose({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-      });
-
-      pose.setOptions({
-        modelComplexity: 0,
-        smoothLandmarks: true,
-        enableSegmentation: false,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      });
-
-      pose.onResults(onPoseResults);
-
-      const camera = new Camera(cameraEl, {
-        onFrame: async () => {
-          await pose.send({ image: cameraEl });
-        },
-        width: 640,
-        height: 480,
-      });
-      camera.start();
-    } catch (error) {
-      console.error(error);
-      instructions.textContent = "Please allow camera access and reload the page.";
-    }
+  console.log("✅ Script loaded, waiting for Pose...");
+  try {
+    const pose = new Pose.Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+    });
+    console.log("✅ Pose object created successfully!");
+  } catch (e) {
+    console.error("❌ Mediapipe failed:", e);
   }
-
-  function onPoseResults(results) {
-    if (!results.poseLandmarks) return;
-
-    const leftShoulder = results.poseLandmarks[11];
-    const rightShoulder = results.poseLandmarks[12];
-    const leftHip = results.poseLandmarks[23];
-    const rightHip = results.poseLandmarks[24];
-
-    const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
-    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-    const hipY = (leftHip.y + rightHip.y) / 2;
-
-    const torsoHeight = (hipY - shoulderY) * window.innerHeight * 2.4;
-    const outfitX = (1 - shoulderX) * window.innerWidth;
-    const outfitY = shoulderY * window.innerHeight;
-
-    const smooth = 0.25;
-    lastX = lastX + smooth * (outfitX - lastX);
-    lastY = lastY + smooth * (outfitY - lastY);
-    lastHeight = lastHeight + smooth * (torsoHeight - lastHeight);
-
-    outfitEl.style.left = `${lastX - outfitEl.offsetWidth / 2}px`;
-    outfitEl.style.top = `${lastY}px`;
-    outfitEl.style.height = `${lastHeight}px`;
-  }
-
-  document.body.addEventListener('click', startCamera, { once: true });
 </script>
+
 
 
 </body>
