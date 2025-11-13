@@ -31,6 +31,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RIYASAT-E-LIBAS TRY-ON</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -74,17 +76,16 @@
       z-index: 0;
       background: black;
       display: none;
+      transform: scaleX(-1); /* mirror for natural view */
     }
 
     #outfit {
       position: absolute;
-      bottom: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      height: 85vh;
       z-index: 2;
+      height: 85vh;
       opacity: 0.95;
       display: none;
+      transform-origin: center top;
     }
   </style>
 </head>
@@ -96,27 +97,62 @@
   <img id="outfit" src="outfit.png" alt="Outfit">
 
   <script>
-    const camera = document.getElementById('camera');
-    const outfit = document.getElementById('outfit');
+    const cameraEl = document.getElementById('camera');
+    const outfitEl = document.getElementById('outfit');
     const instructions = document.querySelector('.instructions');
 
     async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        camera.srcObject = stream;
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      cameraEl.srcObject = stream;
+      cameraEl.style.display = 'block';
+      outfitEl.style.display = 'block';
+      instructions.textContent = "Move slightly back and forth to align 👗";
 
-        camera.style.display = 'block';
-        outfit.style.display = 'block';
-        instructions.textContent = "Move closer to align with the outfit 👗";
-      } catch (err) {
-        console.error('Camera error:', err);
-        instructions.textContent = "Camera access blocked. Please allow it and reload.";
-      }
+      const pose = new Pose.Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+      });
+
+      pose.setOptions({
+        modelComplexity: 0,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      pose.onResults(onPoseResults);
+
+      const cameraFeed = new Camera(cameraEl, {
+        onFrame: async () => {
+          await pose.send({ image: cameraEl });
+        },
+        width: 640,
+        height: 480
+      });
+      cameraFeed.start();
     }
 
-    document.body.addEventListener('click', () => {
-      startCamera();
-    }, { once: true });
+    function onPoseResults(results) {
+      if (!results.poseLandmarks) return;
+
+      const leftShoulder = results.poseLandmarks[11];
+      const rightShoulder = results.poseLandmarks[12];
+      const leftHip = results.poseLandmarks[23];
+      const rightHip = results.poseLandmarks[24];
+
+      const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+      const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+      const hipY = (leftHip.y + rightHip.y) / 2;
+
+      const torsoHeight = (hipY - shoulderY) * 1000;
+
+      outfitEl.style.left = `${(1 - shoulderX) * window.innerWidth}px`;
+      outfitEl.style.top = `${shoulderY * window.innerHeight}px`;
+      outfitEl.style.height = `${torsoHeight * 2.2}px`;
+    }
+
+    document.body.addEventListener('click', startCamera, { once: true });
   </script>
 </body>
 </html>
+
