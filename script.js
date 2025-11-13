@@ -95,6 +95,8 @@ async function startCamera() {
       video: { facingMode: "user" }, // front camera
     });
     video.srcObject = stream;
+    video.muted = true;          // ← new line
+video.playsInline = true;    // ← new line
     await video.play();
 
     async function detectFrame() {
