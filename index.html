@@ -96,63 +96,76 @@
   <video id="camera" autoplay playsinline></video>
   <img id="outfit" src="outfit.png" alt="Outfit">
 
-  <script>
-    const cameraEl = document.getElementById('camera');
-    const outfitEl = document.getElementById('outfit');
-    const instructions = document.querySelector('.instructions');
+<script>
+  const cameraEl = document.getElementById('camera');
+  const outfitEl = document.getElementById('outfit');
+  const instructions = document.querySelector('.instructions');
 
-    async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      cameraEl.srcObject = stream;
-      cameraEl.style.display = 'block';
-      outfitEl.style.display = 'block';
-      instructions.textContent = "Move slightly back and forth to align 👗";
+  let lastX = 0, lastY = 0, lastHeight = 0;
 
-      const pose = new Pose.Pose({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-      });
+  async function startCamera() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    cameraEl.srcObject = stream;
+    cameraEl.style.display = 'block';
+    outfitEl.style.display = 'block';
+    instructions.textContent = "Move slightly back and forth to align 👗";
 
-      pose.setOptions({
-        modelComplexity: 0,
-        smoothLandmarks: true,
-        enableSegmentation: false,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
-      });
+    const pose = new Pose.Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
 
-      pose.onResults(onPoseResults);
+    pose.setOptions({
+      modelComplexity: 0,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
 
-      const cameraFeed = new Camera(cameraEl, {
-        onFrame: async () => {
-          await pose.send({ image: cameraEl });
-        },
-        width: 640,
-        height: 480
-      });
-      cameraFeed.start();
-    }
+    pose.onResults(onPoseResults);
 
-    function onPoseResults(results) {
-      if (!results.poseLandmarks) return;
+    const cameraFeed = new Camera(cameraEl, {
+      onFrame: async () => {
+        await pose.send({ image: cameraEl });
+      },
+      width: 640,
+      height: 480
+    });
+    cameraFeed.start();
+  }
 
-      const leftShoulder = results.poseLandmarks[11];
-      const rightShoulder = results.poseLandmarks[12];
-      const leftHip = results.poseLandmarks[23];
-      const rightHip = results.poseLandmarks[24];
+  function onPoseResults(results) {
+    if (!results.poseLandmarks) return;
 
-      const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
-      const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-      const hipY = (leftHip.y + rightHip.y) / 2;
+    const leftShoulder = results.poseLandmarks[11];
+    const rightShoulder = results.poseLandmarks[12];
+    const leftHip = results.poseLandmarks[23];
+    const rightHip = results.poseLandmarks[24];
 
-      const torsoHeight = (hipY - shoulderY) * 1000;
+    const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const hipY = (leftHip.y + rightHip.y) / 2;
 
-      outfitEl.style.left = `${(1 - shoulderX) * window.innerWidth}px`;
-      outfitEl.style.top = `${shoulderY * window.innerHeight}px`;
-      outfitEl.style.height = `${torsoHeight * 2.2}px`;
-    }
+    // calculate torso height and center
+    const torsoHeight = (hipY - shoulderY) * window.innerHeight * 2.2;
+    const outfitX = shoulderX * window.innerWidth;
+    const outfitY = shoulderY * window.innerHeight;
 
-    document.body.addEventListener('click', startCamera, { once: true });
-  </script>
+    // smooth movement to avoid jitter
+    const smooth = 0.2;
+    lastX = lastX + smooth * (outfitX - lastX);
+    lastY = lastY + smooth * (outfitY - lastY);
+    lastHeight = lastHeight + smooth * (torsoHeight - lastHeight);
+
+    // Position outfit
+    outfitEl.style.left = `${lastX - outfitEl.offsetWidth / 2}px`;
+    outfitEl.style.top = `${lastY}px`;
+    outfitEl.style.height = `${lastHeight}px`;
+  }
+
+  document.body.addEventListener('click', startCamera, { once: true });
+</script>
+
 </body>
 </html>
 
