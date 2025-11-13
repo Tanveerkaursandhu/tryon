@@ -31,97 +31,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RIYASAT-E-LIBAS TRY-ON</title>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: "Poppins", sans-serif;
-      background: black;
-    }
-
-    .brand {
-      position: absolute;
-      top: 15px;
-      width: 100%;
-      font-size: 1.8rem;
-      font-weight: bold;
-      letter-spacing: 3px;
-      color: white;
-      text-shadow: 0 0 8px gold;
-      z-index: 3;
-      text-align: center;
-    }
-
-    .instructions {
-      position: absolute;
-      top: 60px;
-      width: 100%;
-      text-align: center;
-      font-size: 1rem;
-      color: #ffd;
-      z-index: 3;
-    }
-
-    #camera {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 0;
-      background: black;
-      display: none;
-      transform: scaleX(-1); /* mirror for natural view */
-    }
-
-    #outfit {
-      position: absolute;
-      z-index: 2;
-      height: 85vh;
-      opacity: 0.95;
-      display: none;
-      transform-origin: center top;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 </head>
 <body>
   <h1 class="brand">RIYASAT-E-LIBAS</h1>
-  <p class="instructions">Click anywhere to enable camera 🎥</p>
+  <p class="instructions">Click anywhere to start camera 👗</p>
 
   <video id="camera" autoplay playsinline></video>
   <img id="outfit" src="outfit.png" alt="Outfit">
 
-<!-- Mediapipe libraries -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-
-<!-- Mediapipe libraries -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-
-<script>
-  console.log("✅ Script loaded, waiting for Pose...");
-  try {
-    const pose = new Pose.Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
-    console.log("✅ Pose object created successfully!");
-  } catch (e) {
-    console.error("❌ Mediapipe failed:", e);
-  }
-</script>
-
-
-
+  <script src="script.js"></script>
 </body>
 </html>
-
