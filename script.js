@@ -17,17 +17,12 @@
 //   document.querySelector('.instructions').textContent = "Align yourself with the outfit 👗";
 // }, { once: true });
 
-const cameraEl = document.getElementById('camera');
+const cameraElement = document.getElementById('camera');
 const outfit = document.getElementById('outfit');
 
-// Start camera stream
-const startCamera = async () => {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-  cameraEl.srcObject = stream;
-  return stream;
-};
+let camera;
 
-// Initialize MediaPipe Pose
+// Setup MediaPipe Pose
 const pose = new Pose.Pose({
   locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
 });
@@ -37,12 +32,12 @@ pose.setOptions({
   smoothLandmarks: true,
   enableSegmentation: false,
   minDetectionConfidence: 0.5,
-  minTrackingConfidence: 0.5
+  minTrackingConfidence: 0.5,
 });
 
-pose.onResults(onPoseResults);
+pose.onResults(onResults);
 
-function onPoseResults(results) {
+function onResults(results) {
   if (!results.poseLandmarks) {
     outfit.style.display = "none";
     return;
@@ -53,42 +48,40 @@ function onPoseResults(results) {
   const rightShoulder = results.poseLandmarks[12];
   const leftHip = results.poseLandmarks[23];
 
-  // Show outfit
+  // Show the outfit
   outfit.style.display = "block";
 
-  // Compute size and position
+  // Calculate approximate outfit size and position
   const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
   const bodyHeight = Math.abs(leftHip.y - leftShoulder.y);
 
-  const outfitWidth = shoulderWidth * window.innerWidth * 3.5;
-  const outfitHeight = bodyHeight * window.innerHeight * 3.2;
+  const outfitWidth = shoulderWidth * window.innerWidth * 3.2;
+  const outfitHeight = bodyHeight * window.innerHeight * 3.5;
+
+  const centerX = (leftShoulder.x + rightShoulder.x) / 2;
+  const topY = leftShoulder.y - 0.1; // shift a bit upward
 
   outfit.style.width = `${outfitWidth}px`;
   outfit.style.height = `${outfitHeight}px`;
 
-  outfit.style.left = `${leftShoulder.x * window.innerWidth}px`;
-  outfit.style.top = `${leftShoulder.y * window.innerHeight}px`;
-  outfit.style.transform = "translate(-50%, -10%)";
+  outfit.style.left = `${centerX * window.innerWidth}px`;
+  outfit.style.top = `${topY * window.innerHeight}px`;
+  outfit.style.transform = "translate(-50%, 0)";
 }
 
-// Attach camera frames to pose
-async function runPose() {
-  const stream = await startCamera();
-  const videoTrack = stream.getVideoTracks()[0];
-  const imageCapture = new ImageCapture(videoTrack);
-
-  async function detect() {
-    const bitmap = await imageCapture.grabFrame();
-    await pose.send({ image: bitmap });
-    requestAnimationFrame(detect);
-  }
-  detect();
+// Start camera feed using MediaPipe helper
+async function startPoseCamera() {
+  camera = new CameraUtils.Camera(cameraElement, {
+    onFrame: async () => {
+      await pose.send({ image: cameraElement });
+    },
+    width: 1280,
+    height: 720,
+  });
+  camera.start();
 }
 
 document.body.addEventListener('click', () => {
-  runPose();
-  document.querySelector('.instructions').textContent = "Align yourself with the outfit 👗";
+  startPoseCamera();
+  document.querySelector('.instructions').textContent = "Move to fit the outfit 👗";
 }, { once: true });
-
-
-
