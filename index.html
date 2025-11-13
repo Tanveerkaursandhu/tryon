@@ -27,19 +27,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RIYASAT-E-LIBAS AR Try-On</title>
 <style>
-html, body { margin:0; padding:0; height:100%; overflow:hidden; background:black; font-family: "Poppins", sans-serif; }
+html, body { margin:0; padding:0; height:100%; overflow:hidden; background:black; font-family:"Poppins", sans-serif; }
 .brand { position:absolute; top:15px; width:100%; font-size:1.8rem; font-weight:bold; letter-spacing:3px; color:white; text-shadow:0 0 8px gold; z-index:3; text-align:center; }
 .instructions { position:absolute; top:60px; width:100%; text-align:center; font-size:1rem; color:#ffd; z-index:3; }
 #camera { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0; background:black; }
-#outfit { position:absolute; bottom:5%; left:50%; transform:translateX(-50%); height:85vh; z-index:2; opacity:0.95; }
+#outfit { position:absolute; bottom:5%; left:50%; transform:translateX(-50%); height:85vh; z-index:2; opacity:0.95; transition:left 0.1s, top 0.1s, transform 0.1s; }
 </style>
 </head>
 <body>
 
 <h1 class="brand">RIYASAT-E-LIBAS</h1>
-<p class="instructions">Move closer to align with outfit 👗</p>
+<p class="instructions">Tap to start camera and try the outfit 👗</p>
 
-<video id="camera" autoplay playsinline></video>
+<video id="camera" autoplay playsinline muted></video>
 <img id="outfit" src="outfit.png" alt="Outfit">
 
 <!-- TensorFlow.js -->
@@ -51,13 +51,13 @@ html, body { margin:0; padding:0; height:100%; overflow:hidden; background:black
 const video = document.getElementById('camera');
 const outfit = document.getElementById('outfit');
 
-// Start camera (existing functionality)
+// Start camera safely
 async function startCamera() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:"user" } });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
     video.srcObject = stream;
-    await video.play();
-    trackPose(); // Start tracking after camera is ready
+    await video.play(); // Wait until video is ready
+    trackPose(); // Start tracking only after camera is ready
   } catch(e) {
     alert("Camera access required!");
     console.error(e);
@@ -69,32 +69,35 @@ document.body.addEventListener('click', () => {
   document.querySelector('.instructions').textContent = "Align yourself with the outfit 👗";
 }, { once: true });
 
-// Pose tracking using MoveNet
+// Pose tracking using MoveNet on the existing video
 async function trackPose() {
   const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet);
 
   async function poseLoop() {
-    const poses = await detector.estimatePoses(video);
-    if (poses.length > 0) {
-      const keypoints = poses[0].keypoints;
-      const leftShoulder = keypoints.find(k => k.name === "left_shoulder");
-      const rightShoulder = keypoints.find(k => k.name === "right_shoulder");
-      const leftHip = keypoints.find(k => k.name === "left_hip");
-      const rightHip = keypoints.find(k => k.name === "right_hip");
+    if (video.readyState >= 2) { // Make sure video has enough data
+      const poses = await detector.estimatePoses(video);
+      if (poses.length > 0) {
+        const keypoints = poses[0].keypoints;
+        const leftShoulder = keypoints.find(k => k.name === "left_shoulder");
+        const rightShoulder = keypoints.find(k => k.name === "right_shoulder");
+        const leftHip = keypoints.find(k => k.name === "left_hip");
+        const rightHip = keypoints.find(k => k.name === "right_hip");
 
-      if(leftShoulder && rightShoulder && leftHip && rightHip) {
-        const centerX = (leftShoulder.x + rightShoulder.x)/2;
-        const centerY = (leftShoulder.y + rightShoulder.y)/2;
-        const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
-        const torsoHeight = Math.abs(((leftShoulder.y + rightShoulder.y)/2) - ((leftHip.y + rightHip.y)/2));
+        if(leftShoulder && rightShoulder && leftHip && rightHip) {
+          const centerX = (leftShoulder.x + rightShoulder.x)/2;
+          const centerY = (leftShoulder.y + rightShoulder.y)/2;
+          const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
+          const torsoHeight = Math.abs(((leftShoulder.y + rightShoulder.y)/2) - ((leftHip.y + rightHip.y)/2));
 
-        outfit.style.left = ${centerX}px;
-        outfit.style.top = ${centerY - torsoHeight*0.4}px;
-        outfit.style.transform = translate(-50%,0) scale(${shoulderWidth/100});
+          outfit.style.left = ${centerX}px;
+          outfit.style.top = ${centerY - torsoHeight*0.4}px;
+          outfit.style.transform = translate(-50%,0) scale(${shoulderWidth/100});
+        }
       }
     }
     requestAnimationFrame(poseLoop);
   }
+
   poseLoop();
 }
 </script>
